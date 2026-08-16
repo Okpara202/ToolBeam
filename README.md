@@ -36,7 +36,7 @@ npm run dev                   # http://localhost:8000/docs
 | `npm run build` / `npm start` | Bundle to `dist/` and run it |
 | `npm run seed` | Wipe and reload the directory, then print the cheat sheet |
 | `npm run reconcile` | Rebuild every `upvoteCount` from the upvotes collection |
-| `npm test` | Integration suite against an in-memory MongoDB |
+| `npm test` | Integration suite against a real MongoDB (see [Testing](#testing)) |
 | `npm run type-check` / `npm run lint` | Static checks |
 
 ### Environment
