@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: toolbeam-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Swagger UI is served on the deployed instance on purpose — the point of
+      # deploying is that anyone can exercise the API without cloning the repo.
+      - key: ENABLE_DOCS
+        value: 'true'
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 7d
+      # Set these in the Render dashboard, not here.
+      #   DATABASE_URL       Atlas connection string (Network Access must allow 0.0.0.0/0)
+      #   JWT_ACCESS_SECRET  long random string
+      #   API_BASE_URL       https://<your-service>.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: API_BASE_URL
+        sync: false

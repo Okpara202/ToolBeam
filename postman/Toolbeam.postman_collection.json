@@ -1,0 +1,404 @@
+{
+  "info": {
+    "name": "Toolbeam API",
+    "description": "Toolbeam — the backend for an AI tools directory.\n\nThe requests in **1. Demo Flow** are ordered exactly as the demo runs, top to bottom. Everything else lives in **2. Reference**.\n\n### Before you start\n\n1. Set the `baseUrl` collection variable. It ships pointing at `http://localhost:8000/api/v1`; swap it for the deployed URL to run against production.\n2. Run **Log in** once. It captures the bearer token into `{{token}}` automatically — there is no token to copy by hand.\n3. Paste the two anchor tool ids printed by `npm run seed` into the `anchorToolId` and `anchorToolIdB` variables.\n\n`Submit a new AI tool` generates a random suffix on every send, so it can be rehearsed as many times as you like without ever tripping the duplicate-link 409.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string",
+      "description": "Swap for the deployed URL to demo against production."
+    },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "newToolId", "value": "", "type": "string" },
+    {
+      "key": "anchorToolId",
+      "value": "6a8224272bd4a93d5f34e779",
+      "type": "string",
+      "description": "Midjourney. Re-seeding assigns new ids — repaste from the cheat sheet npm run seed prints."
+    },
+    {
+      "key": "anchorToolIdB",
+      "value": "6a8224272bd4a93d5f34e786",
+      "type": "string",
+      "description": "GitHub Copilot. Re-seeding assigns new ids — repaste from the cheat sheet."
+    },
+    { "key": "runSuffix", "value": "", "type": "string" },
+    { "key": "demoEmail", "value": "demo@toolbeam.dev", "type": "string" },
+    { "key": "demoPassword", "value": "Toolbeam123!", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Demo Flow",
+      "description": "Run these in order.",
+      "item": [
+        {
+          "name": "0. Log in",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test('logs in', () => pm.response.to.have.status(200));",
+                  "pm.test('returns a token', () => pm.expect(json.data.token).to.be.a('string'));",
+                  "",
+                  "// Captured here so no request below needs the token pasted in by hand.",
+                  "pm.collectionVariables.set('token', json.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{demoEmail}}\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "description": "Returns `data.token`, captured into `{{token}}` by the test script. Do this before you start recording."
+          }
+        },
+        {
+          "name": "1. Submit a new AI tool",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A fresh suffix per send, so the name and link are always unique.",
+                  "// Without this a rehearsal would claim the link and the take would",
+                  "// come back 409 TOOL_ALREADY_EXISTS on camera.",
+                  "pm.collectionVariables.set('runSuffix', Math.random().toString(36).slice(2, 7));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test('creates the tool', () => pm.response.to.have.status(201));",
+                  "pm.test('starts with zero upvotes', () => pm.expect(json.data.upvoteCount).to.eql(0));",
+                  "",
+                  "pm.collectionVariables.set('newToolId', json.data.id);",
+                  "console.log('New tool id:', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Toolbeam Scout {{runSuffix}}\",\n  \"description\": \"Watches product launch feeds and surfaces newly released AI tools with a short summary of what each one actually does.\",\n  \"category\": \"research\",\n  \"link\": \"https://scout-{{runSuffix}}.toolbeam.dev\",\n  \"tags\": [\"research\", \"search\", \"discovery\", \"answer-engine\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/tools", "host": ["{{baseUrl}}"], "path": ["tools"] },
+            "description": "Requires a bearer token. The new tool id is captured into `{{newToolId}}` for steps 2 and 5."
+          }
+        },
+        {
+          "name": "2. Recent Tools — the new tool is first",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test('returns recent tools', () => pm.response.to.have.status(200));",
+                  "pm.test('newly submitted tool is first', () =>",
+                  "  pm.expect(json.data[0].id).to.eql(pm.collectionVariables.get('newToolId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/recent?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "recent"],
+              "query": [{ "key": "limit", "value": "5" }]
+            },
+            "description": "A pure `createdAt` ordering, newest first. The tool submitted in step 1 is at the top."
+          }
+        },
+        {
+          "name": "3. Upvote a tool",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test('records the upvote', () => pm.response.to.have.status(200));",
+                  "pm.test('counter went up', () => pm.expect(json.data.upvoteCount).to.be.above(0));",
+                  "",
+                  "console.log(json.data.name, 'now has', json.data.upvoteCount, 'upvotes');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/{{anchorToolId}}/upvote",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "{{anchorToolId}}", "upvote"]
+            },
+            "description": "One upvote per user per tool, enforced by a unique index on the upvotes collection. Send it a second time to see the 409 — the seeded demo account casts none of the seeded votes, so the first send always succeeds."
+          }
+        },
+        {
+          "name": "4. Related Tools — existing tool",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test('returns related tools', () => pm.response.to.have.status(200));",
+                  "pm.test('found real matches', () => pm.expect(json.data[0].relevanceScore).to.be.above(0));",
+                  "",
+                  "// Stashed so step 5 can prove the two result sets differ.",
+                  "pm.collectionVariables.set('relatedForAnchor', json.data.map(t => t.name).join(', '));",
+                  "console.log('Related to', json.source.name + ':', pm.collectionVariables.get('relatedForAnchor'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/{{anchorToolId}}/related?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "{{anchorToolId}}", "related"],
+              "query": [{ "key": "limit", "value": "5" }]
+            },
+            "description": "Each result carries a `relevanceScore` and a `matchedOn` block showing exactly which category, tags and keywords it shared."
+          }
+        },
+        {
+          "name": "5. Related Tools — the newly submitted tool",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const previous = pm.collectionVariables.get('relatedForAnchor') || '';",
+                  "const current = json.data.map(t => t.name).join(', ');",
+                  "",
+                  "pm.test('returns related tools', () => pm.response.to.have.status(200));",
+                  "pm.test('not empty despite zero upvotes', () => pm.expect(json.data.length).to.be.above(0));",
+                  "pm.test('different set from the anchor tool', () => pm.expect(current).to.not.eql(previous));",
+                  "",
+                  "console.log('Related to', json.source.name + ':', current);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/{{newToolId}}/related?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "{{newToolId}}", "related"],
+              "query": [{ "key": "limit", "value": "5" }]
+            },
+            "description": "Same endpoint, different tool, different results — and it works on a tool with zero upvotes and no interaction history, because relatedness is scored from content rather than behaviour."
+          }
+        },
+        {
+          "name": "6. Popular Tools — upvotes discounted by age",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const scores = json.data.map(t => t.popularityScore);",
+                  "",
+                  "pm.test('returns popular tools', () => pm.response.to.have.status(200));",
+                  "pm.test('sorted by score descending', () =>",
+                  "  pm.expect(scores).to.eql([...scores].sort((a, b) => b - a)));",
+                  "",
+                  "json.data.forEach(t =>",
+                  "  console.log(`${t.name}: ${t.upvoteCount} upvotes, ${Math.round(t.ageHours / 24)}d old, score ${t.popularityScore}`));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/popular?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "popular"],
+              "query": [{ "key": "limit", "value": "10" }]
+            },
+            "description": "score = upvoteCount / (ageHours + 2)^1.5, computed at query time against the server clock. Note the tools near the top with far fewer lifetime upvotes than the veterans below them — that is the age discount doing its job."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Reference",
+      "description": "Everything else the API exposes.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ada Lovelace\",\n  \"email\": \"ada@toolbeam.dev\",\n  \"password\": \"Toolbeam123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "description": "Returns a token immediately, so a new account can submit a tool without logging in separately."
+          }
+        },
+        {
+          "name": "Current user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        },
+        {
+          "name": "Browse all tools",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "category", "value": "image-generation", "disabled": true },
+                { "key": "search", "value": "video", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get a single tool",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/{{anchorToolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "{{anchorToolId}}"]
+            }
+          }
+        },
+        {
+          "name": "Related Tools — second anchor",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/{{anchorToolIdB}}/related?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "{{anchorToolIdB}}", "related"],
+              "query": [{ "key": "limit", "value": "5" }]
+            },
+            "description": "A third tool for comparison — a different category again, so a third distinct result set."
+          }
+        },
+        {
+          "name": "Popular Tools — trending this week",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/popular?window=week&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "popular"],
+              "query": [
+                { "key": "window", "value": "week" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Ranks by upvotes cast inside the last 7 days, with no age decay — the window already bounds recency. Runs off the upvotes collection rather than scanning every tool."
+          }
+        },
+        {
+          "name": "Upvote again — expect 409",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/{{anchorToolId}}/upvote",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "{{anchorToolId}}", "upvote"]
+            },
+            "description": "Send after step 3. The unique { user, tool } index rejects the duplicate at the database, and the service turns that into 409 ALREADY_UPVOTED."
+          }
+        },
+        {
+          "name": "Remove an upvote",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tools/{{anchorToolId}}/upvote",
+              "host": ["{{baseUrl}}"],
+              "path": ["tools", "{{anchorToolId}}", "upvote"]
+            }
+          }
+        },
+        {
+          "name": "Categories",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        }
+      ]
+    }
+  ]
+}
