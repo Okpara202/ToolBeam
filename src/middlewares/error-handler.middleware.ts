@@ -13,8 +13,7 @@ interface NormalizedError {
   code: string;
 }
 
-const isProductionLike = () =>
-  NODE_ENV === NodeEnv.PRODUCTION || NODE_ENV === NodeEnv.STAGING;
+const isProductionLike = () => NODE_ENV === NodeEnv.PRODUCTION || NODE_ENV === NodeEnv.STAGING;
 
 /**
  * Maps whatever was thrown onto a status/message/code triple.

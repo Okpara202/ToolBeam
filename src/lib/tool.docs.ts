@@ -22,7 +22,9 @@ const toolSchema = z
     description: z.string().openapi({
       example: 'An answer engine that searches the web in real time and returns cited answers.',
     }),
-    category: z.enum(CATEGORIES as [Category, ...Category[]]).openapi({ example: Category.RESEARCH }),
+    category: z
+      .enum(CATEGORIES as [Category, ...Category[]])
+      .openapi({ example: Category.RESEARCH }),
     link: z.string().openapi({ example: 'https://www.perplexity.ai' }),
     tags: z.array(z.string()).openapi({ example: ['search', 'citations', 'answer-engine'] }),
     submittedBy: z.string().openapi({ example: '6a60b6659c16fbcbeab13e48' }),
@@ -42,11 +44,17 @@ const popularToolSchema = toolSchema
     ageHours: z
       .number()
       .optional()
-      .openapi({ example: 72.4, description: 'Age of the tool at query time. All-time ranking only.' }),
+      .openapi({
+        example: 72.4,
+        description: 'Age of the tool at query time. All-time ranking only.',
+      }),
     windowUpvotes: z
       .number()
       .optional()
-      .openapi({ example: 18, description: 'Upvotes cast inside the window. Windowed ranking only.' }),
+      .openapi({
+        example: 18,
+        description: 'Upvotes cast inside the window. Windowed ranking only.',
+      }),
   })
   .openapi('PopularTool');
 
@@ -63,7 +71,9 @@ const relatedToolSchema = toolSchema
         sharedTags: z.array(z.string()).openapi({ example: ['search', 'citations'] }),
         sharedKeywords: z.array(z.string()).openapi({ example: ['answers', 'sources'] }),
       })
-      .openapi({ description: 'Why this tool matched — the score broken back down into its parts.' }),
+      .openapi({
+        description: 'Why this tool matched — the score broken back down into its parts.',
+      }),
   })
   .openapi('RelatedTool');
 
@@ -141,7 +151,11 @@ export const registerToolDocs = () => {
       '401': commonResponses.unauthorized,
       '409': {
         description: 'A tool with this link already exists',
-        content: { 'application/json': { schema: commonResponses.conflict.content['application/json'].schema } },
+        content: {
+          'application/json': {
+            schema: commonResponses.conflict.content['application/json'].schema,
+          },
+        },
       },
       '422': commonResponses.validation,
     },
@@ -270,7 +284,11 @@ export const registerToolDocs = () => {
       '404': commonResponses.notFound,
       '409': {
         description: 'You have already upvoted this tool',
-        content: { 'application/json': { schema: commonResponses.conflict.content['application/json'].schema } },
+        content: {
+          'application/json': {
+            schema: commonResponses.conflict.content['application/json'].schema,
+          },
+        },
       },
     },
   });
@@ -292,7 +310,11 @@ export const registerToolDocs = () => {
       '404': commonResponses.notFound,
       '409': {
         description: 'You have not upvoted this tool',
-        content: { 'application/json': { schema: commonResponses.conflict.content['application/json'].schema } },
+        content: {
+          'application/json': {
+            schema: commonResponses.conflict.content['application/json'].schema,
+          },
+        },
       },
     },
   });

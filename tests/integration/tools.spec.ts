@@ -1,5 +1,13 @@
 import { Category } from '@/constants/category';
-import { API, buildApp, registerUser, seedTool, submitTool, toolPayload, type App } from '../helpers';
+import {
+  API,
+  buildApp,
+  registerUser,
+  seedTool,
+  submitTool,
+  toolPayload,
+  type App,
+} from '../helpers';
 import request from 'supertest';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -114,7 +122,12 @@ describe('Tools', () => {
       const response = await request(app).get(`${API}/tools/recent?limit=2&page=2`);
 
       expect(response.body.data).toHaveLength(1);
-      expect(response.body.pagination).toMatchObject({ page: 2, limit: 2, total: 3, totalPages: 2 });
+      expect(response.body.pagination).toMatchObject({
+        page: 2,
+        limit: 2,
+        total: 3,
+        totalPages: 2,
+      });
     });
   });
 

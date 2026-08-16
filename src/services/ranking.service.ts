@@ -122,7 +122,9 @@ const windowedPopular = (limit: number, days: number) => {
     { $limit: limit },
     { $lookup: { from: 'tools', localField: '_id', foreignField: '_id', as: 'tool' } },
     { $unwind: '$tool' },
-    { $replaceRoot: { newRoot: { $mergeObjects: ['$tool', { windowUpvotes: '$windowUpvotes' }] } } },
+    {
+      $replaceRoot: { newRoot: { $mergeObjects: ['$tool', { windowUpvotes: '$windowUpvotes' }] } },
+    },
     { $sort: { windowUpvotes: -1, createdAt: -1 } },
     toolProjectionStage({
       windowUpvotes: 1,

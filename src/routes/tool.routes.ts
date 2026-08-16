@@ -35,7 +35,11 @@ router.get('/recent', validateSchema(recentToolsQuerySchema, 'query'), getRecent
 router.get('/popular', validateSchema(popularToolsQuerySchema, 'query'), getPopularToolsHandler);
 
 router.get('/:id', getToolByIdHandler);
-router.get('/:id/related', validateSchema(relatedToolsQuerySchema, 'query'), getRelatedToolsHandler);
+router.get(
+  '/:id/related',
+  validateSchema(relatedToolsQuerySchema, 'query'),
+  getRelatedToolsHandler,
+);
 
 // --- authenticated writes ------------------------------------------------
 

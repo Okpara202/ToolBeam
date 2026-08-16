@@ -47,7 +47,11 @@ export const submitTool = async (
   app: App,
   token: string,
   overrides: Record<string, unknown> = {},
-) => request(app).post(`${API}/tools`).set('Authorization', `Bearer ${token}`).send(toolPayload(overrides));
+) =>
+  request(app)
+    .post(`${API}/tools`)
+    .set('Authorization', `Bearer ${token}`)
+    .send(toolPayload(overrides));
 
 interface SeedToolOptions {
   name: string;

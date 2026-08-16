@@ -1,9 +1,5 @@
 import { registry } from '@/lib/open-api-registry';
-import {
-  bearerAuth,
-  commonResponses,
-  successResponseSchema,
-} from '@/lib/response.docs';
+import { bearerAuth, commonResponses, successResponseSchema } from '@/lib/response.docs';
 import { z } from '@/lib/zod';
 import { loginSchema, registerSchema } from '@/validations/auth.validation';
 
@@ -44,7 +40,11 @@ export const registerAuthDocs = () => {
       },
       '409': {
         description: 'Email already registered',
-        content: { 'application/json': { schema: commonResponses.conflict.content['application/json'].schema } },
+        content: {
+          'application/json': {
+            schema: commonResponses.conflict.content['application/json'].schema,
+          },
+        },
       },
       '422': commonResponses.validation,
     },
@@ -65,7 +65,11 @@ export const registerAuthDocs = () => {
       },
       '401': {
         description: 'Invalid email or password',
-        content: { 'application/json': { schema: commonResponses.unauthorized.content['application/json'].schema } },
+        content: {
+          'application/json': {
+            schema: commonResponses.unauthorized.content['application/json'].schema,
+          },
+        },
       },
       '422': commonResponses.validation,
     },
