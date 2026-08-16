@@ -11,9 +11,9 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8000/api/v1",
+      "value": "https://toolbeam.onrender.com/api/v1",
       "type": "string",
-      "description": "Swap for the deployed URL to demo against production."
+      "description": "The live deployment. Swap for http://localhost:8000/api/v1 to run against a local server."
     },
     { "key": "token", "value": "", "type": "string" },
     { "key": "newToolId", "value": "", "type": "string" },

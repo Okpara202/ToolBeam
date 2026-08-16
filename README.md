@@ -4,6 +4,19 @@
 
 Thousands of AI tools launch every month. Finding the right one is not a search problem, it is a ranking problem. Toolbeam is the layer that does that ranking: a beacon through the noise, pointing builders at the tool that actually fits.
 
+## Live
+
+| | |
+| --- | --- |
+| **Interactive API docs** | **https://toolbeam.onrender.com/docs** |
+| API base | `https://toolbeam.onrender.com/api/v1` |
+| OpenAPI spec | [`/docs.json`](https://toolbeam.onrender.com/docs.json) |
+| Postman collection | [`postman/Toolbeam.postman_collection.json`](postman/Toolbeam.postman_collection.json) |
+
+The instance is seeded with 50 real AI tools and thousands of upvotes, so every endpoint returns meaningful data straight away. Try [`/tools/popular`](https://toolbeam.onrender.com/api/v1/tools/popular) against [`/tools/recent`](https://toolbeam.onrender.com/api/v1/tools/recent) to see the ranking do its work.
+
+> Hosted on a free tier, so the first request after a period of inactivity takes 30–50 seconds while the instance wakes. Everything after that is fast.
+
 ---
 
 ## Contents
@@ -276,9 +289,10 @@ Test environment variables are set in [`vitest.config.ts`](vitest.config.ts) rat
 
 ## Deployment
 
-Deployed as a Render web service; see [`render.yaml`](render.yaml).
+Live at **https://toolbeam.onrender.com** as a Render web service; see [`render.yaml`](render.yaml).
 
-- Build `npm ci && npm run build`, start `npm start`, health check `/health`.
+- Build `npm ci --include=dev && npm run build`, start `npm start`, health check `/health`.
+- `--include=dev` matters: Render sets `NODE_ENV=production`, which makes npm skip `devDependencies` — and the build tool lives there.
 - Set `DATABASE_URL`, `JWT_ACCESS_SECRET` and `API_BASE_URL` in the dashboard.
 - Atlas → **Network Access** must allow `0.0.0.0/0`; Render's egress IPs are dynamic.
 - Docs are gated on `ENABLE_DOCS`, not on `NODE_ENV`, so the deployed instance serves its own Swagger UI.

@@ -8,8 +8,8 @@ Everything needed to record the submission video. Total runtime under 7 minutes:
 
 - [ ] **Seed the database.** `npm run seed`. Copy the cheat sheet it prints.
 - [ ] **Paste the two anchor tool ids** into the Postman collection variables `anchorToolId` (Midjourney) and `anchorToolIdB` (GitHub Copilot).
-- [ ] **Point `baseUrl` at the deployed URL** — `https://<service>.onrender.com/api/v1`.
-- [ ] **Wake the Render instance.** Open `/health` in a browser and wait for `{"status":"ok"}`. Free tier cold-starts take 30–50 seconds; hitting a sleeping instance live burns half your demo window.
+- [ ] **Check `baseUrl`** is `https://toolbeam.onrender.com/api/v1` (already set in the collection).
+- [ ] **Wake the Render instance.** Open https://toolbeam.onrender.com/health and wait for `{"status":"ok"}`. Free tier cold-starts take 30–50 seconds; hitting a sleeping instance live burns half your demo window.
 - [ ] **Run `0. Log in` once.** The token is captured into `{{token}}` automatically and every other request uses it. Do not spend camera time on auth.
 - [ ] **Close other tabs.** Have Postman and the Swagger page (`/docs`) open, nothing else.
 - [ ] Optional dry run: send requests 1→6 once. `Submit a new AI tool` randomises its own name and link on every send, so rehearsing cannot cause a duplicate-link 409 in the real take.

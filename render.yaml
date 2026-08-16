@@ -3,7 +3,9 @@ services:
     name: toolbeam-api
     runtime: node
     plan: free
-    buildCommand: npm ci && npm run build
+    # --include=dev is required: NODE_ENV=production below makes npm skip
+    # devDependencies, and tsdown (the build tool) lives there.
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /health
     envVars:
