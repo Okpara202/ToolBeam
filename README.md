@@ -2,7 +2,7 @@
 
 **The backend API for an AI tools directory.** Submit AI tools, upvote them, and discover them three ways: by recency, by popularity, and by relation.
 
-Thousands of AI tools launch every month. Finding the right one is not a search problem — it is a ranking problem. Toolbeam is the layer that does that ranking: a beacon through the noise, pointing builders at the tool that actually fits.
+Thousands of AI tools launch every month. Finding the right one is not a search problem, it is a ranking problem. Toolbeam is the layer that does that ranking: a beacon through the noise, pointing builders at the tool that actually fits.
 
 ---
 
