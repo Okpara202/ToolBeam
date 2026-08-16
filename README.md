@@ -104,7 +104,7 @@ Import [the collection](postman/Toolbeam.postman_collection.json) and [the envir
 
 ## How Popular works
 
-> The three questions this answers: _what makes a tool popular, how is that stored, and how does the API calculate and return it._
+> The ranking that makes this a directory rather than a list: what counts as popular, where that lives in the database, and how it is computed per request.
 
 ### What makes a tool popular
 

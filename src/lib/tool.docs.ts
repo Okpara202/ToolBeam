@@ -41,20 +41,14 @@ const popularToolSchema = toolSchema
       description:
         'upvoteCount / (ageHours + 2)^1.5 — computed at query time, never stored. For a windowed request this is the number of upvotes cast inside the window.',
     }),
-    ageHours: z
-      .number()
-      .optional()
-      .openapi({
-        example: 72.4,
-        description: 'Age of the tool at query time. All-time ranking only.',
-      }),
-    windowUpvotes: z
-      .number()
-      .optional()
-      .openapi({
-        example: 18,
-        description: 'Upvotes cast inside the window. Windowed ranking only.',
-      }),
+    ageHours: z.number().optional().openapi({
+      example: 72.4,
+      description: 'Age of the tool at query time. All-time ranking only.',
+    }),
+    windowUpvotes: z.number().optional().openapi({
+      example: 18,
+      description: 'Upvotes cast inside the window. Windowed ranking only.',
+    }),
   })
   .openapi('PopularTool');
 

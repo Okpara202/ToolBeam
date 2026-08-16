@@ -105,9 +105,9 @@ async function seed() {
       link: tool.link,
       linkKey: normalizeLink(tool.link),
       tags: normalizeTags(tool.tags),
-      // Derived exactly as the live submit endpoint derives them, so seeded
-      // tools and demo-submitted tools score identically in the related
-      // pipeline. Any divergence here would make the demo misleading.
+      // Derived with the same helper the submit endpoint uses, so a seeded tool
+      // and one created through the API score identically in the related
+      // pipeline. Any divergence would make seeded data behave unlike real data.
       keywords: extractKeywords(tool.name, tool.description),
       submittedBy: (members[Math.floor(random() * members.length)] as { _id: Types.ObjectId })._id,
       upvoteCount: tool.upvotes,
@@ -123,9 +123,9 @@ async function seed() {
 
   // --- upvotes -----------------------------------------------------------
   // Real Upvote documents, not just a counter. The whole popularity design
-  // rests on this collection being the source of truth, so seeding a bare
-  // count would produce a database that `npm run reconcile` would wipe back to
-  // zero — and a demo that lies about how the system works.
+  // rests on this collection being the source of truth, so seeding a bare count
+  // would produce a database that `npm run reconcile` would correctly wipe back
+  // to zero, and windowed ranking would have no timestamps to work with.
   console.log('Creating upvote documents…');
   const upvoteDocs: {
     user: Types.ObjectId;

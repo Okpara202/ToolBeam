@@ -557,10 +557,11 @@ export const SEED_TOOLS: SeedTool[] = [
 ];
 
 /**
- * The two tools the demo uses for back-to-back related lookups.
+ * Two reference tools for comparing `/related` responses side by side.
  *
- * Different categories and completely disjoint tag sets, so the two responses
- * cannot look alike — which is exactly what the "related returns different
- * results for two different tools" check is asking to see.
+ * Deliberately from different categories with completely disjoint tag sets, so
+ * their related lists cannot overlap. That makes them a quick sanity check that
+ * relevance is genuinely being scored per source tool, rather than the endpoint
+ * quietly returning the same popular tools to everyone.
  */
 export const ANCHOR_TOOL_NAMES = ['Midjourney', 'GitHub Copilot'] as const;

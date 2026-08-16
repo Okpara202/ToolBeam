@@ -33,7 +33,7 @@ export const register = async (input: RegisterInput) => {
   });
 
   // Returning a token straight from register saves the client a second round
-  // trip, and lets the demo submit a tool immediately after signing up.
+  // trip and lets a new account submit a tool immediately after signing up.
   return {
     user: sanitizeUser(user),
     token: signAccessToken({ id: user._id.toString(), email: user.email }),
