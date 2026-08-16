@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Toolbeam API",
-    "description": "Toolbeam — the backend for an AI tools directory.\n\nThe requests in **1. Demo Flow** are ordered exactly as the demo runs, top to bottom. Everything else lives in **2. Reference**.\n\n### Before you start\n\n1. Set the `baseUrl` collection variable. It ships pointing at `http://localhost:8000/api/v1`; swap it for the deployed URL to run against production.\n2. Run **Log in** once. It captures the bearer token into `{{token}}` automatically — there is no token to copy by hand.\n3. Paste the two anchor tool ids printed by `npm run seed` into the `anchorToolId` and `anchorToolIdB` variables.\n\n`Submit a new AI tool` generates a random suffix on every send, so it can be rehearsed as many times as you like without ever tripping the duplicate-link 409.",
+    "description": "**Toolbeam** — the backend API for an AI tools directory. Submit AI tools, upvote them, and discover them by recency, popularity and relation.\n\n| | |\n| --- | --- |\n| Swagger UI | https://toolbeam.onrender.com/docs |\n| OpenAPI spec | https://toolbeam.onrender.com/docs.json |\n| Base URL | `https://toolbeam.onrender.com/api/v1` |\n| Source | https://github.com/Okpara202/ToolBeam |\n\n## Getting started\n\n1. Select the **Toolbeam — Production** environment (top right), or rely on the collection variables, which already point at the live deployment.\n2. Send **0. Log in**. Its test script captures the bearer token into `{{token}}`, and every authenticated request below reads from it — there is no token to copy by hand.\n3. Work through **1. Quickstart** top to bottom. Each request builds on the one before it. **2. Reference** documents everything else the API exposes.\n\n## How the ranking works\n\n**`/tools/popular`** ranks upvotes discounted by age:\n\n```\nscore = upvoteCount / (ageHours + 2)^1.5\n```\n\nThe `upvotes` collection is the source of truth, made idempotent by a unique `{ user, tool }` index. `upvoteCount` is a denormalized counter. The score itself is never stored — it changes every second as tools age, so it is computed at query time against the server clock. Responses include `popularityScore` and `ageHours` so the ordering can be checked by hand.\n\n**`/tools/:id/related`** scores weighted overlap of category, tags and derived keywords, tie-broken by saturated popularity:\n\n```\nscore = 3 x same category\n      + 2 x shared tags\n      + 1 x shared keywords\n      + 0.5 x normalized popularity\n```\n\nContent-based rather than collaborative, so it returns useful results for a tool submitted seconds ago with no vote history. Every result carries a `matchedOn` object explaining why it matched.\n\n## Notes\n\n- Hosted on a free tier: the first request after a period of inactivity takes 30–50 seconds while the instance wakes.\n- **1. Submit a new AI tool** appends a random suffix to its name and link on each send, so it can be run repeatedly without tripping the duplicate-link `409`.\n- Upvoting is idempotent — a second upvote of the same tool by the same user returns `409 ALREADY_UPVOTED`, enforced by a database index rather than application code.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -19,15 +19,15 @@
     { "key": "newToolId", "value": "", "type": "string" },
     {
       "key": "anchorToolId",
-      "value": "6a823f4a03abc2d2dda40fa8",
+      "value": "7001bea00000000000000004",
       "type": "string",
-      "description": "Midjourney. Re-seeding assigns new ids — repaste from the cheat sheet npm run seed prints."
+      "description": "An image-generation tool (Midjourney). Seeded ids are deterministic, so this stays valid across re-seeds."
     },
     {
       "key": "anchorToolIdB",
-      "value": "6a823f4a03abc2d2dda40fb5",
+      "value": "7001bea00000000000000011",
       "type": "string",
-      "description": "GitHub Copilot. Re-seeding assigns new ids — repaste from the cheat sheet."
+      "description": "A code-assistant tool (GitHub Copilot). Used to show that a different source tool yields a different related set."
     },
     { "key": "runSuffix", "value": "", "type": "string" },
     { "key": "demoEmail", "value": "demo@toolbeam.dev", "type": "string" },
@@ -35,8 +35,8 @@
   ],
   "item": [
     {
-      "name": "1. Demo Flow",
-      "description": "Run these in order.",
+      "name": "1. Quickstart",
+      "description": "Run these in order — each request builds on the one before it.",
       "item": [
         {
           "name": "0. Log in",
@@ -65,8 +65,12 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{demoEmail}}\",\n  \"password\": \"{{demoPassword}}\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
-            "description": "Returns `data.token`, captured into `{{token}}` by the test script. Do this before you start recording."
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Returns `data.token`, captured into `{{token}}` by the test script. Run this first — every authenticated request in the collection reads from it."
           }
         },
         {
@@ -78,8 +82,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "// A fresh suffix per send, so the name and link are always unique.",
-                  "// Without this a rehearsal would claim the link and the take would",
-                  "// come back 409 TOOL_ALREADY_EXISTS on camera.",
+                  "// Without this, a second send would claim the same link and come",
+                  "// back 409 TOOL_ALREADY_EXISTS.",
                   "pm.collectionVariables.set('runSuffix', Math.random().toString(36).slice(2, 7));"
                 ]
               }
@@ -287,7 +291,11 @@
               "mode": "raw",
               "raw": "{\n  \"name\": \"Ada Lovelace\",\n  \"email\": \"ada@toolbeam.dev\",\n  \"password\": \"Toolbeam123!\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
             "description": "Returns a token immediately, so a new account can submit a tool without logging in separately."
           }
         },
@@ -395,7 +403,11 @@
             "auth": { "type": "noauth" },
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"]
+            }
           }
         }
       ]

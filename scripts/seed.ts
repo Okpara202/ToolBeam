@@ -5,9 +5,27 @@ import Upvote from '@/db/models/upvote.model';
 import User from '@/db/models/user.model';
 import { extractKeywords, hashPassword, normalizeLink, normalizeTags } from '@/utils/helper.util';
 import { ANCHOR_TOOL_NAMES, SEED_TOOLS } from './seed-data';
-import type { Types } from 'mongoose';
+import { Types } from 'mongoose';
 
 const MS_PER_DAY = 86_400_000;
+
+/**
+ * Builds a deterministic ObjectId from a prefix and an index.
+ *
+ * Left to Mongo, every re-seed would mint fresh ids, silently invalidating any
+ * id already saved in a Postman environment, a bookmark or a shared link. The
+ * data this script produces is already byte-identical between runs; making the
+ * ids stable too is what actually delivers on that — re-seeding now restores
+ * exactly the previous state rather than an equivalent-but-renamed one.
+ *
+ * An ObjectId is 12 bytes / 24 hex characters. The prefixes below are hex-safe
+ * and chosen to be obviously synthetic, so a seeded id is recognisable on sight.
+ */
+const stableId = (prefix: string, index: number) =>
+  new Types.ObjectId(prefix + index.toString(16).padStart(24 - prefix.length, '0'));
+
+const USER_ID_PREFIX = '5eeded'; // "seeded"
+const TOOL_ID_PREFIX = '7001bea'; // "toolbea", leetspeak so every character is valid hex
 
 /**
  * Enough accounts to back the largest upvote count in the catalogue, since the
@@ -18,8 +36,8 @@ const MEMBER_COUNT = 360;
 
 /**
  * Deterministic PRNG (mulberry32) so two runs of the seed produce byte-identical
- * data. Without it, re-seeding between rehearsal and recording would quietly
- * reshuffle the rankings and invalidate any tool ids already pasted into Postman.
+ * data. Without it, re-seeding would quietly reshuffle every ranking, making it
+ * impossible to tell a genuine regression from ordinary randomness.
  */
 const createRandom = (seed: number) => {
   let state = seed >>> 0;
@@ -57,23 +75,30 @@ async function seed() {
   const password = await hashPassword(SEED_USER_PASSWORD);
 
   const memberDocs = Array.from({ length: MEMBER_COUNT }, (_, i) => ({
+    _id: stableId(USER_ID_PREFIX, i + 1),
     name: `Toolbeam Member ${i + 1}`,
     email: `member${i + 1}@toolbeam.dev`,
     password,
   }));
 
   console.log(`Creating ${MEMBER_COUNT + 1} users…`);
-  // The demo account is created but never used as an upvoter below, so it can
-  // upvote anything during the recording without hitting ALREADY_UPVOTED.
-  await User.create({ name: 'Toolbeam Demo', email: SEED_USER_EMAIL, password });
+  // Deliberately excluded from the upvoters below, so this account starts with
+  // a clean slate and can upvote any tool without hitting ALREADY_UPVOTED.
+  await User.create({
+    _id: stableId(USER_ID_PREFIX, 0),
+    name: 'Toolbeam Demo',
+    email: SEED_USER_EMAIL,
+    password,
+  });
   const members = await User.insertMany(memberDocs);
 
   // --- tools -------------------------------------------------------------
   console.log(`Creating ${SEED_TOOLS.length} tools…`);
-  const toolDocs = SEED_TOOLS.map((tool) => {
+  const toolDocs = SEED_TOOLS.map((tool, index) => {
     const createdAt = new Date(now - tool.ageDays * MS_PER_DAY);
 
     return {
+      _id: stableId(TOOL_ID_PREFIX, index),
       name: tool.name,
       description: tool.description,
       category: tool.category,
@@ -140,25 +165,25 @@ async function seed() {
     await Upvote.insertMany(upvoteDocs.slice(i, i + BATCH), { timestamps: false });
   }
 
-  // --- cheat sheet -------------------------------------------------------
+  // --- summary -----------------------------------------------------------
   const anchors = await Tool.find({ name: { $in: [...ANCHOR_TOOL_NAMES] } });
   const [recent] = await Tool.find().sort({ createdAt: -1 }).limit(1);
 
   const line = '─'.repeat(74);
   console.log(`\n${line}`);
-  console.log('  TOOLBEAM SEED COMPLETE — DEMO CHEAT SHEET');
+  console.log('  TOOLBEAM SEED COMPLETE');
   console.log(line);
   console.log(`  Users            ${MEMBER_COUNT + 1}`);
   console.log(`  Tools            ${tools.length}`);
   console.log(`  Upvotes          ${upvoteDocs.length}`);
   console.log('');
-  console.log('  DEMO LOGIN');
+  console.log('  TEST ACCOUNT');
   console.log(`    email          ${SEED_USER_EMAIL}`);
   console.log(`    password       ${SEED_USER_PASSWORD}`);
-  console.log('    This account casts none of the seeded upvotes, so it can');
-  console.log('    upvote any tool on camera without hitting the 409.');
+  console.log('    Holds none of the seeded upvotes, so it starts with a clean');
+  console.log('    slate and can upvote any tool without hitting ALREADY_UPVOTED.');
   console.log('');
-  console.log('  ANCHOR TOOLS — for the two back-to-back related lookups');
+  console.log('  SAMPLE TOOL IDS — two different categories, for comparing /related');
 
   for (const name of ANCHOR_TOOL_NAMES) {
     const tool = anchors.find((candidate) => candidate.name === name);
@@ -174,12 +199,12 @@ async function seed() {
 
   if (recent) {
     console.log('');
-    console.log('  NEWEST SEEDED TOOL');
+    console.log('  NEWEST TOOL');
     console.log(`    ${recent.name} — ${recent._id.toString()} (${recent.upvoteCount} upvotes)`);
   }
 
   console.log('');
-  console.log('  SUGGESTED SUBMISSION FOR THE DEMO');
+  console.log('  SAMPLE SUBMISSION');
   console.log('    POST /api/v1/tools');
   console.log(
     '    ' +
@@ -193,9 +218,9 @@ async function seed() {
       }),
   );
   console.log('');
-  console.log('    Category "research" and the shared tags mean this lands on');
-  console.log('    top of Perplexity / Elicit / Consensus in its related list —');
-  console.log('    visibly different from either anchor, with zero upvotes.');
+  console.log('    Category "research" plus those tags put Perplexity / Elicit /');
+  console.log('    Consensus at the top of its related list — a different set from');
+  console.log('    either sample id above, and it works with zero upvotes.');
   console.log(line + '\n');
 
   await disconnectDB();
