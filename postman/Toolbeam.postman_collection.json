@@ -19,13 +19,13 @@
     { "key": "newToolId", "value": "", "type": "string" },
     {
       "key": "anchorToolId",
-      "value": "6a8224272bd4a93d5f34e779",
+      "value": "6a823f4a03abc2d2dda40fa8",
       "type": "string",
       "description": "Midjourney. Re-seeding assigns new ids — repaste from the cheat sheet npm run seed prints."
     },
     {
       "key": "anchorToolIdB",
-      "value": "6a8224272bd4a93d5f34e786",
+      "value": "6a823f4a03abc2d2dda40fb5",
       "type": "string",
       "description": "GitHub Copilot. Re-seeding assigns new ids — repaste from the cheat sheet."
     },
